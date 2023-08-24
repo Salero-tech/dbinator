@@ -1,4 +1,3 @@
-
 <script lang="ts">
     import DBmeter from "$lib/dBmeter.svelte";
 </script>
@@ -13,6 +12,7 @@
     height: 100%;
     margin: 0;
     color: whitesmoke;
+
 }
 
 .content {
@@ -22,8 +22,10 @@
     flex-direction: column;
     flex: 1;
 
+
     
     .middle {
+        min-width: 50px;
         width: 100%;
         display: flex;
         align-items: center;
@@ -37,8 +39,7 @@
         
     }
     .bottom {
-        flex: 1;
-        align-items: start;
+        display: flex;
     }
 }
 
@@ -46,7 +47,7 @@
 </style>
 
 <div class="content">
-    <DBmeter />
+    <DBmeter size={14} />
     
     <div class="middle">
         <div class="offset">Offset ON</div>
@@ -54,8 +55,8 @@
     </div>
 
     <div class="bottom">
-        <DBmeter />
-        <DBmeter />
+        <DBmeter size={10}/>
+        <DBmeter size={10}/>
     </div>
 </div>
     
