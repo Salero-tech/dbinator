@@ -7,10 +7,12 @@
 	import LastUpdate from "$lib/ui/lastUpdate.svelte";
 	import VuMeter from "$lib/ui/vuMeter.svelte";
 	import PopUp from "$lib/ui/popUp.svelte";
+	import RedEffect from "$lib/ui/redEffect.svelte";
 
     let sinceLastUpdate = 0;
     let IsError = false;
     let errorMsg = "Error";
+    let damageEffect:boolean = false;
     let data:DbData = {
         "LAEQ": [73, 73, 73, 73, 73, 73],
         "LCEQ": [73, 73, 73, 73, 73, 73],
@@ -54,6 +56,17 @@
             if (sinceLastUpdate >= 30){
                 errorMsg = "NO CONNECTION";
                 IsError = true;
+            }
+            else{
+                IsError = false;
+            }
+
+            //check if over limit
+            if (data.LAEQ[5] > data.LIMIT[0]+2) {
+                damageEffect = true;
+            }
+            else {
+                damageEffect = false;
             }
         }, 100)
 
@@ -133,6 +146,8 @@
 
 </style>
 
+
+
 <div class="mainContent">
     <div class="content">
         <div class="top">
@@ -160,6 +175,8 @@
 </div>
 
 <PopUp msg={errorMsg} isActive={IsError} />
+
+<RedEffect />
 
     
 
