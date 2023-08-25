@@ -1,9 +1,16 @@
-import {getData} from "$lib/data";
+import {getData} from "$lib/logic/data";
 import { json } from "@sveltejs/kit";
 
 export async function GET () {
-    const data = await getData();
-    console.log(data);
-    return json(data);
+    try {
+        const data = await getData();
+        console.log(data);
+        return json(data);
+    }
+    catch (err) {
+        return json({});
+    }
+    
+    
     
 }

@@ -1,33 +1,65 @@
 <script lang="ts">
-    import DBmeter from "$lib/dBmeter.svelte";
-    import Offset from "$lib/offset.svelte";
-	import type { DbData } from "$lib/type";
+    import DBmeter from "$lib/ui/dBmeter.svelte";
+    import Offset from "$lib/ui/offset.svelte";
+	import type { DbData } from "$lib/logic/type";
 	import { onMount } from "svelte";
+	import Limit from "$lib/ui/limit.svelte";
+	import LastUpdate from "$lib/ui/lastUpdate.svelte";
+	import VuMeter from "$lib/ui/vuMeter.svelte";
+	import PopUp from "$lib/ui/popUp.svelte";
 
+    let sinceLastUpdate = 0;
+    let IsError = false;
+    let errorMsg = "Error";
     let data:DbData = {
-        "LAEQ": [1],
-        "LCEQ": [1],
-        "LIMIT": [1],
-        "LEQREF": [1],
-        "WEIREF": [1],
-        "COLOR": ["--"],
+        "LAEQ": [73, 73, 73, 73, 73, 73],
+        "LCEQ": [73, 73, 73, 73, 73, 73],
+        "LIMIT": [100,118],
+        "LEQREF": [1, 7, 3],
+        "WEIREF": [0, 0, 0],
+        "COLOR": ["#00ff00","#00ff00","#00ff00"],
         "OFFSET": false,
-        "VUMETER": [true]        
+        "VUMETER": [true, true, true, true, true, true, true, false, false, false, false, false, false]        
     };
 
     async function getFromBackend () {
-        const res = await fetch("/");
-        data = await res.json();
+        try {
+            const res = await fetch("/");
+            const newData = await res.json();
+        if (!(JSON.stringify(newData) === JSON.stringify({}))) {
+            console.log("update");
+            data = newData;
+            sinceLastUpdate = 0;
+        }
+        else {
+            throw "failed";
+        }
+        } catch (e) {
+            console.log("failed");
+        }
+        
+        
     }
 
 
     onMount(() => {
-        const reflesh = setInterval(() =>{
+        const reflesh = setInterval(() => {
             getFromBackend();
     }, 500);
 
+        const sinceLastUpdateInterval = setInterval(() => {
+            sinceLastUpdate += 0.1
+
+            //check if connection active
+            if (sinceLastUpdate >= 30){
+                errorMsg = "NO CONNECTION";
+                IsError = true;
+            }
+        }, 100)
+
     return () => {
         clearInterval(reflesh);
+        clearInterval(sinceLastUpdateInterval);
     }
     });
     
@@ -45,6 +77,11 @@
     color: whitesmoke;
     flex-direction: column;
 
+}
+
+.mainContent {
+    display: flex;
+    flex: 1
 }
 
 .content {
@@ -86,6 +123,8 @@
     }
 }
 
+
+
 .end {
         display: flex;
         flex-direction: row;
@@ -94,26 +133,33 @@
 
 </style>
 
-<div class="content">
-    <div class="top"><DBmeter dataArray={data.LAEQ} size={14} index={0} /></div>
-    
-    <div class="middle">
-        <Offset state={data.OFFSET} />
-        <div class="line"/>
-    </div>
+<div class="mainContent">
+    <div class="content">
+        <div class="top">
+            <DBmeter dataArray={data.LAEQ} size={14} defaultIndex={0} color={data.COLOR[0]} />
+        </div>
+        
+        <div class="middle">
+            <Offset state={data.OFFSET} size={1.5}/>
+            <div class="line"/>
+        </div>
 
-    <div class="bottom">
-        <DBmeter dataArray={data.LAEQ} size={8} index={5}/>
-        <div class="spacer"></div>
-        <DBmeter dataArray={data.LAEQ} size={8} index={2}/>
+        <div class="bottom">
+            <DBmeter dataArray={data.LAEQ} size={8} defaultIndex={5} color={data.COLOR[1]} />
+            <div class="spacer"></div>
+            <DBmeter dataArray={data.LAEQ} size={8} defaultIndex={2} color={data.COLOR[2]} />
+        </div>
     </div>
+    <VuMeter size={1.5} dataArray={data.VUMETER}/>
 </div>
 
 <div class="end">
-    <div style="margin-right: auto;">limit</div>
-    <div>network</div>
+    <Limit size={1.5} limit={data.LIMIT} />
+    <div style="width: 100%;"/>
+    <LastUpdate size={1.5} sinceLastUpdate={sinceLastUpdate}/>
 </div>
 
+<PopUp msg={errorMsg} isActive={IsError} />
 
     
 

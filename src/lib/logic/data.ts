@@ -1,4 +1,4 @@
-import { type DbData } from './type';
+import { type DbData } from '$lib/logic/type';
 import * as xml2js from 'xml2js';
 
 interface InputData{
