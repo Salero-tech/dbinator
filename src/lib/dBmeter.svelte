@@ -1,6 +1,7 @@
 <script lang="ts">
     export let size:number;
-    console.log(size);
+    export let index:number;
+    export let dataArray:Array<number> = [1];
 </script>
 
 <style lang="scss">
@@ -42,7 +43,7 @@
 </style>
 
 <div class="main">
-    <div class="number" style="font-size: {size}vw;">74</div>
+    <div class="number" style="font-size: {size}vw;">{dataArray[index]}</div>
     <div class="holder">
         <select name="test" id="choose">
             <option value="0">Leq1s</option>
