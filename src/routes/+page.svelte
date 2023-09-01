@@ -14,6 +14,7 @@
     let errorMsg = "Error";
     let damageEffect:boolean = false;
     let data:DbData = {
+        //"LAEQ": [100, 100, 100, 100, 100, 100],
         "LAEQ": [73, 73, 73, 73, 73, 73],
         "LCEQ": [73, 73, 73, 73, 73, 73],
         "LIMIT": [100,118],
@@ -29,7 +30,7 @@
             const res = await fetch("/");
             const newData = await res.json();
         if (!(JSON.stringify(newData) === JSON.stringify({}))) {
-            console.log("update");
+            console.log("update");  
             data = newData;
             sinceLastUpdate = 0;
         }
@@ -53,7 +54,7 @@
             sinceLastUpdate += 0.1
 
             //check if connection active
-            if (sinceLastUpdate >= 30){
+            if (sinceLastUpdate >= 60){
                 errorMsg = "NO CONNECTION";
                 IsError = true;
             }
@@ -62,7 +63,7 @@
             }
 
             //check if over limit
-            if (data.LAEQ[5] > data.LIMIT[0]+2) {
+            if (data.LAEQ[5] >= data.LIMIT[0]) {
                 damageEffect = true;
             }
             else {
@@ -132,7 +133,7 @@
         height: 100%;
     }
     .spacer {
-        width: 20vw;
+        width: 5vw;
     }
 }
 
@@ -151,32 +152,32 @@
 <div class="mainContent">
     <div class="content">
         <div class="top">
-            <DBmeter dataArray={data.LAEQ} size={14} defaultIndex={0} color={data.COLOR[0]} />
+            <DBmeter dataArray={data.LAEQ} size={25} defaultIndex={0} color={data.COLOR[0]} />
         </div>
         
         <div class="middle">
-            <Offset state={data.OFFSET} size={1.5}/>
+            <Offset state={data.OFFSET} size={2}/>
             <div class="line"/>
         </div>
 
         <div class="bottom">
-            <DBmeter dataArray={data.LAEQ} size={8} defaultIndex={5} color={data.COLOR[1]} />
+            <DBmeter dataArray={data.LAEQ} size={15} defaultIndex={5} color={data.COLOR[1]} />
             <div class="spacer"></div>
-            <DBmeter dataArray={data.LAEQ} size={8} defaultIndex={2} color={data.COLOR[2]} />
+            <DBmeter dataArray={data.LAEQ} size={15} defaultIndex={2} color={data.COLOR[2]} />
         </div>
     </div>
-    <VuMeter size={1.5} dataArray={data.VUMETER}/>
+    <VuMeter size={2} dataArray={data.VUMETER}/>
 </div>
 
 <div class="end">
-    <Limit size={1.5} limit={data.LIMIT} />
+    <Limit size={2} limit={data.LIMIT} />
     <div style="width: 100%;"/>
-    <LastUpdate size={1.5} sinceLastUpdate={sinceLastUpdate}/>
+    <LastUpdate size={2.5} sinceLastUpdate={sinceLastUpdate}/>
 </div>
 
 <PopUp msg={errorMsg} isActive={IsError} />
 
-<RedEffect />
+<RedEffect isActive={damageEffect}/>
 
     
 

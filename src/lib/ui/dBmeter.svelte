@@ -9,28 +9,27 @@
     let index:number = 0;
     let stringValue:string = "--";
 
-    
-
     onMount(() => {
         index = defaultIndex;
-        updateString();
     });
 
     function changeIndex (e){
         index = e.target.value;
         console.log(index);
         console.log(dataArray[index]);
-        updateString();
     }
 
-    function updateString () {
+    function getString (dataArray:Array<number>) {
         if (dataArray[index] <= 73) {
-        stringValue = "--"
+        stringValue = "<span>&#8199;</span>--"
     }
     else {
-        stringValue = dataArray[index].toString();
+        if (dataArray[index] >= 100) stringValue = dataArray[index].toString();
+        else stringValue = "<span>&#8199;</span>" + dataArray[index].toString();
     }
+    return stringValue;
     }
+
 </script>
 
 <style lang="scss">
@@ -77,7 +76,7 @@
 </style>
 
 <div class="main">
-    <div class="number" style="font-size: {size}vw; color: {color};">{stringValue}</div>
+    <div class="number" style="font-size: {size}vw; color: {color};">{@html getString(dataArray)}</div>
     <div class="holder">
         <select name="choose" id="choose" on:change={changeIndex} value={index.toString()}>
             <option value="0">LAeq1s</option>
