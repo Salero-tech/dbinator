@@ -15,8 +15,8 @@ interface InputData{
 };
 
 
-export async function getData ():Promise<DbData> {
-    const res = await fetch("http://192.168.30.60/xml/Global.xml");
+export async function getData (ip:string):Promise<DbData> {
+    const res = await fetch(`http://${ip}/xml/Global.xml`);
     const XMLdata = await res.text();
     return new Promise(resolve => {
         xml2js.parseString(XMLdata, (err, res) => {

@@ -4,5 +4,7 @@ services:
   dbMeter:
     image: salero33/dbmeter:latest
     restart: unless-stopped
+    environment:
+      - dbIp=192.168.30.80
     ports:
       - 3000:3000
