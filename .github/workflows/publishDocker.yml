@@ -9,6 +9,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+      - name: build
+        run: |
+          npm ci
+          npm audit fix
+          npm run build
       - name: Publish on dockerhub
         uses: docker/build-push-action@v1
         with:
