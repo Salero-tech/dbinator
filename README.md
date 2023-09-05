@@ -16,3 +16,13 @@ Use supplied docker-compose [file](docker-compose.yml).
 |--|--|
 |✅ |amd64|
 |✅ |arm64|
+
+# Pictures
+## normal
+![normal view](pictures/normal.png)
+
+## no connection
+![no connection view](pictures/no%20connection.png)
+
+# reached limit
+![damage effect](pictures/damage.png)
