@@ -63,7 +63,8 @@
             }
 
             //check if over limit
-            if (data.LAEQ[5] >= data.LIMIT[0]) {
+            if (data.LAEQ[2] >= data.LIMIT[0]) {
+                console.log("limit");
                 damageEffect = true;
             }
             else {
