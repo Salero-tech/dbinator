@@ -26,6 +26,7 @@
       "OFFSET": false,
       "VUMETER": [true, true, true, true, true, true, true, false, false, false, false, false, false]        
   };
+    let settingsActive:boolean = false;
 
   async function getFromBackend () {
       try {
@@ -42,8 +43,11 @@
       } catch (e) {
           console.log(e);
       }
-      
-      
+  }
+
+  function showSettings () {
+    console.log(settingsActive);
+    settingsActive = true;
   }
 
 
@@ -56,7 +60,7 @@
           sinceLastUpdate += 0.1
 
           //check if connection active
-          if (sinceLastUpdate >= 60){
+          if (sinceLastUpdate >= 30){
               errorMsg = "NO CONNECTION";
               IsError = true;
           }
@@ -82,7 +86,7 @@
 </script>
 
 <style lang="scss">
-:global(html){
+.app{
   height: 100%;
 }
 :global(body) {
@@ -97,7 +101,7 @@
 
 .mainContent {
   display: flex;
-  flex: 1
+  flex: 1;
 }
 
 .content {
@@ -142,10 +146,20 @@
 
 
 .end {
-      display: flex;
-      flex-direction: row;
+    display: flex;
+    flex-direction: row;
   }
 
+
+.hiddenButton {
+    position: absolute;
+    z-index: 100;
+    top: 0;
+    width: 150px;
+    height: 150px;
+    left: 0;
+
+}
 
 </style>
 
@@ -154,7 +168,7 @@
 <div class="mainContent">
   <div class="content">
       <div class="top">
-          <DBmeter dataArray={data.LAEQ} size={25} defaultIndex={0} color={data.COLOR[0]} />
+          <DBmeter dataArray={data.LAEQ} size={21} defaultIndex={0} color={data.COLOR[0]} />
       </div>
       
       <div class="middle">
@@ -171,18 +185,20 @@
   <VuMeter size={2} dataArray={data.VUMETER}/>
 </div>
 
+
+
 <div class="end">
   <Limit size={2} limit={data.LIMIT} />
   <div style="width: 100%;"/>
   <LastUpdate size={2.5} sinceLastUpdate={sinceLastUpdate}/>
 </div>
 
-<Settings isActive={true} />
-
 <PopUp msg={errorMsg} isActive={IsError} />
 
 <RedEffect isActive={damageEffect}/>
 
-  
+<!-- svelte-ignore a11y-no-static-element-interactions -->
+<div class="hiddenButton" on:dblclick={showSettings}></div>
+<Settings isActive={settingsActive} />
 
 

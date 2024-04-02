@@ -8,7 +8,7 @@
 
 <style lang="scss">
     .main{
-        
+        top: 0;
         position: absolute;
         z-index: 100;
         width: 100%;
