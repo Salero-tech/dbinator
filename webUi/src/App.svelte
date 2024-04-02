@@ -9,6 +9,7 @@
     import PopUp from "./lib/ui/popUp.svelte";
     import RedEffect from "./lib/ui/redEffect.svelte";
     import { getData } from "./lib/logic/data"
+    import Settings from "./lib/ui/settings.svelte"
 
     let sinceLastUpdate = 0;
     let IsError = false;
@@ -175,6 +176,8 @@
   <div style="width: 100%;"/>
   <LastUpdate size={2.5} sinceLastUpdate={sinceLastUpdate}/>
 </div>
+
+<Settings isActive={true} />
 
 <PopUp msg={errorMsg} isActive={IsError} />
 
