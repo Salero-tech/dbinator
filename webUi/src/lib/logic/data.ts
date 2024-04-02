@@ -1,4 +1,4 @@
-import { type DbData } from '$lib/logic/type';
+import { type DbData } from './type';
 import * as xml2js from 'xml2js';
 
 interface InputData{
@@ -15,8 +15,8 @@ interface InputData{
 };
 
 
-export async function getData (ip:string):Promise<DbData> {
-    const res = await fetch(`http://${ip}/xml/Global.xml`);
+export async function getData ():Promise<DbData> {
+    const res = await fetch(`/api/data`);
     const XMLdata = await res.text();
     return new Promise(resolve => {
         xml2js.parseString(XMLdata, (err, res) => {
