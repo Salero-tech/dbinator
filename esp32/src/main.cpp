@@ -1,5 +1,5 @@
 /****************************************************************************************************************************
-  HelloServer.ino - Dead simple web-server for Ethernet shields
+  ESP32_FS_EthernetWebServer.ino - Dead simple FS Ethernet WebServer for ES32 using Ethernet shields
 
   For Ethernet shields using WT32_ETH01 (ESP32 + LAN8720)
 
@@ -9,16 +9,78 @@
   Built by Khoi Hoang https://github.com/khoih-prog/WebServer_WT32_ETH01
   Licensed under MIT license
  *****************************************************************************************************************************/
+/*****************************************************************************************************************************
+   The Arduino board communicates with the shield using the SPI bus. This is on digital pins 11, 12, and 13 on the Uno
+   and pins 50, 51, and 52 on the Mega. On both boards, pin 10 is used as SS. On the Mega, the hardware SS pin, 53,
+   is not used to select the Ethernet controller chip, but it must be kept as an output or the SPI interface won't work.
+*****************************************************************************************************************************/
+/*****************************************************************************************************************************
+   How To Use:
+   1) Upload the contents of the data folder with MkSPIFFS Tool ("ESP8266 Sketch Data Upload" in Tools menu in Arduino IDE)
+   2) or you can upload the contents of a folder if you CD in that folder and run the following command:
+      for file in `\ls -A1`; do curl -F "file=@$PWD/$file" localIPAddress/edit; done
+   3) access the sample web page at http://localIPAddress/
+*****************************************************************************************************************************/
 
 #define DEBUG_ETHERNET_WEBSERVER_PORT       Serial
 
 // Debug Level from 0 to 4
 #define _ETHERNET_WEBSERVER_LOGLEVEL_       3
 
+#define USE_LITTLEFS                false
+#define USE_SPIFFS                  true
+
+// For WT32_ETH01 only (A0 = IO36 = 36)
+#if defined(ARDUINO_WT32_ETH01)
+  #define A0        36
+#endif
+
+// For ESP32
+#if USE_LITTLEFS
+  //LittleFS has higher priority
+  #include "FS.h"
+
+  // Check cores/esp32/esp_arduino_version.h and cores/esp32/core_version.h
+  //#if ( ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(2, 0, 0) )  //(ESP_ARDUINO_VERSION_MAJOR >= 2)
+  #if ( defined(ESP_ARDUINO_VERSION_MAJOR) && (ESP_ARDUINO_VERSION_MAJOR >= 2) )
+    #warning Using ESP32 Core 1.0.6 or 2.0.0+
+    // The library has been merged into esp32 core from release 1.0.6
+    #include <LittleFS.h>
+
+    FS* filesystem =            &LittleFS;
+    #define FileFS              LittleFS
+    #define CurrentFileFS       "LittleFS"
+  #else
+    #warning Using ESP32 Core 1.0.5-. You must install LITTLEFS library
+    // The library has been merged into esp32 core from release 1.0.6
+    #include <LITTLEFS.h>             // https://github.com/lorol/LITTLEFS
+
+    FS* filesystem =            &LITTLEFS;
+    #define FileFS              LITTLEFS
+    #define CurrentFileFS       "LittleFS"
+  #endif
+
+  #ifdef USE_SPIFFS
+    #undef USE_SPIFFS
+  #endif
+
+  #define USE_SPIFFS                  false
+#elif USE_SPIFFS
+  #include "FS.h"
+  #include <SPIFFS.h>
+
+  FS* filesystem =          &SPIFFS;
+  #define FileFS            SPIFFS
+  #define CurrentFileFS     "SPIFFS"
+#endif
+
 #include <WebServer_WT32_ETH01.h>
-#include "SPIFFS.h"
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+#include <ESPmDNS.h>
 
 WebServer server(80);
+String dbMeterIp = "192.168.0.20";
 
 // Select the IP address according to your local network
 IPAddress myIP(192, 168, 2, 232);
@@ -28,57 +90,255 @@ IPAddress mySN(255, 255, 255, 0);
 // Google DNS Server IP
 IPAddress myDNS(8, 8, 8, 8);
 
-String readFile(String name)
+//format bytes
+String formatBytes(size_t bytes)
 {
-  File file = SPIFFS.open(name);
-  if(!file) return "";
-
-  String content = "";
-  //read
-  while(file.available())
+  if (bytes < 1024)
   {
-    //Serial.println(file.read());
-    content += char(file.read());
+    return String(bytes) + "B";
   }
-
-  file.close();
-
-  return content;
+  else if (bytes < (1024 * 1024))
+  {
+    return String(bytes / 1024.0) + "KB";
+  }
+  else if (bytes < (1024 * 1024 * 1024))
+  {
+    return String(bytes / 1024.0 / 1024.0) + "MB";
+  }
+  else
+  {
+    return String(bytes / 1024.0 / 1024.0 / 1024.0) + "GB";
+  }
 }
 
-void handleNotFound()
+String getContentType(String filename)
 {
-  String message = F("File Not Found\n\n");
-
-  message += F("URI: ");
-  message += server.uri();
-  message += F("\nMethod: ");
-  message += (server.method() == HTTP_GET) ? F("GET") : F("POST");
-  message += F("\nArguments: ");
-  message += server.args();
-  message += F("\n");
-
-  for (uint8_t i = 0; i < server.args(); i++)
+  if (server.hasArg("download"))
   {
-    message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
+    return "application/octet-stream";
+  }
+  else if (filename.endsWith(".htm"))
+  {
+    return "text/html";
+  }
+  else if (filename.endsWith(".html"))
+  {
+    return "text/html";
+  }
+  else if (filename.endsWith(".css"))
+  {
+    return "text/css";
+  }
+  else if (filename.endsWith(".js"))
+  {
+    return "application/javascript";
+  }
+  else if (filename.endsWith(".png"))
+  {
+    return "image/png";
+  }
+  else if (filename.endsWith(".gif"))
+  {
+    return "image/gif";
+  }
+  else if (filename.endsWith(".jpg"))
+  {
+    return "image/jpeg";
+  }
+  else if (filename.endsWith(".ico"))
+  {
+    return "image/x-icon";
+  }
+  else if (filename.endsWith(".xml"))
+  {
+    return "text/xml";
+  }
+  else if (filename.endsWith(".pdf"))
+  {
+    return "application/x-pdf";
+  }
+  else if (filename.endsWith(".zip"))
+  {
+    return "application/x-zip";
+  }
+  else if (filename.endsWith(".gz"))
+  {
+    return "application/x-gzip";
   }
 
-  server.send(404, F("text/plain"), message);
+  return "text/plain";
+}
+
+bool handleFileRead(String path)
+{
+  Serial.println("handleFileRead: " + path);
+
+  if (path.endsWith("/"))
+  {
+    path += "index.htm";
+  }
+
+  String contentType = getContentType(path);
+  String pathWithGz = path + ".gz";
+
+  if (filesystem->exists(pathWithGz) || filesystem->exists(path))
+  {
+    if (filesystem->exists(pathWithGz))
+    {
+      path += ".gz";
+    }
+
+    File file = filesystem->open(path, "r");
+    server.streamFile(file, contentType);
+    file.close();
+    return true;
+  }
+
+  return false;
+}
+
+void initFS()
+{
+  // Initialize LittleFS/SPIFFS file-system
+  // Format SPIFFS if not yet
+  if (!FileFS.begin(true))
+  {
+    Serial.println(F("SPIFFS/LittleFS failed! Formatting."));
+
+    if (!FileFS.begin())
+    {
+      while (true)
+      {
+#if USE_LITTLEFS
+        Serial.println(F("LittleFS failed!. Please use SPIFFS."));
+#else
+        Serial.println(F("SPIFFS failed!. Please use LittleFS."));
+#endif
+        // Stay forever here as useless to go further
+        delay(5000);
+      }
+    }
+  }
+}
+
+void handleApiData ()
+{
+  if (!WT32_ETH01_isConnected())
+  {
+    server.send(500, "text/plain", "no Network");
+    return;
+  }
+  HTTPClient http;
+  http.begin("http://"+dbMeterIp+"/xml/Global.xml");
+  http.setConnectTimeout(200);
+  int httpCode = http.GET();
+  if (httpCode > 0)
+  {
+    // file found at server
+    if (httpCode == HTTP_CODE_OK)
+    {
+      String payload = http.getString();
+      Serial.println(payload);
+      server.send(200, "text/xml", payload);
+      return;
+    }
+  }
+  else
+  {
+    Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
+  }
+  server.send(500, "text/plain", "unable to reach dbMeter");
+  http.end();
+}
+
+void handleApiTargetIp ()
+{
+  server.enableCrossOrigin();
+  if (server.method() == HTTP_POST)
+  {
+    JsonDocument doc;
+    DeserializationError error = deserializeJson(doc, server.arg(0));
+    Serial.println(error.f_str());
+    dbMeterIp = doc["ip"].as<String>();
+    Serial.println(server.arg(1));
+    server.send(200);
+  }
+
+  if (server.method() == HTTP_GET)
+  {
+    server.send(200, " application/json", "{\"ip\": \""+ dbMeterIp +"\"}");
+  }
+
+  server.send(400, "method not found");
+}
+
+void handleApiNetConf ()
+{
+  server.enableCrossOrigin();
+  if (server.method() == HTTP_POST)
+  {
+    JsonDocument doc;
+    DeserializationError error = deserializeJson(doc, server.arg(0));
+    Serial.println(error.f_str());
+    dbMeterIp = doc["ip"].as<String>();
+    Serial.println(server.arg(1));
+    server.send(200);
+  }
+
+  if (server.method() == HTTP_GET)
+  {
+    server.send(200, " application/json", "{\"ip\": \""+ dbMeterIp +"\"}");
+  }
+
+  server.send(400, "method not found");
+}
+
+void initWebserver()
+{
+  //SERVER INIT 
+  //called when the url is not defined here
+  //use it to load content from SPIFFS
+  server.onNotFound([]()
+  {
+    if (!handleFileRead(server.uri()))
+    {
+      server.send(404, "text/plain", "FileNotFound");
+    }
+  });
+
+  // Web Page handlers
+  server.serveStatic("/", FileFS, "/index.html");
+
+  // api
+  server.on("/api/data", handleApiData);
+  server.on("/api/targetIp", handleApiTargetIp);
+
+  server.begin();
+}
+
+void ipFromStore ()
+{
+  File file = SPIFFS.open("/ip.tx");
+
+  dbMeterIp = file.readString();
+  file.close();
+}
+
+void storeIp (String ip)
+{
+  File file = SPIFFS.open("/ip.tx", FILE_WRITE);
+  file.print(dbMeterIp);
+  file.close();
 }
 
 void setup()
 {
-  // Open serial communications and wait for port to open:
   Serial.begin(115200);
 
+  // Using this if Serial debugging is not necessary or not using Serial port
   while (!Serial && (millis() < 3000));
 
-    //file system
-  if(!SPIFFS.begin(true)){
-    return;
-  }
-
-  Serial.print("\nStarting HelloServer on " + String(ARDUINO_BOARD));
+  Serial.print("\nStarting webserver on " + String(ARDUINO_BOARD));
   Serial.println(" with " + String(SHIELD_TYPE));
   Serial.println(WEBSERVER_WT32_ETH01_VERSION);
 
@@ -96,17 +356,17 @@ void setup()
 
   WT32_ETH01_waitForConnect();
 
-  // content
-  server.on(F("/"), [](){server.send(200, F("text/html"), readFile("/index.html"));});
-  //server.on(F("/salzstreuer.png"), [](){server.send(200, F("image/png "), readFile("/salzstreuer.png"));});
-  server.on(F("/assets/index-2VgJMA8N.css"), [](){server.send(200, F("text/css"), readFile("/assets/index-2VgJMA8N.css"));});
-  server.on(F("/assets/index-BIl7oL_-.js"), [](){server.send(200, F("text/javascript"), readFile("/assets/index-BIl7oL_-.js"));});
+  MDNS.begin("dbmeter");
+  initFS();
+  ipFromStore();
+  initWebserver();
 
-  server.onNotFound(handleNotFound);
-  server.begin();
-
-  Serial.print(F("HTTP EthernetWebServer is @ IP : "));
+  Serial.print("HTTP server started @");
   Serial.println(ETH.localIP());
+
+  Serial.print(F("Open http://"));
+  Serial.print(ETH.localIP());
+  Serial.println(F("/ to see Db Meter"));
 }
 
 void loop()

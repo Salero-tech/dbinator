@@ -5,7 +5,7 @@
     import {getIp, setIp} from "../logic/settings"
     import { onMount } from "svelte";
 
-    let ip = "0.0.0.0";
+    let ip:String = "0.0.0.0";
 
 
     function onSubmit (e:Event) {
@@ -17,8 +17,8 @@
         deactivate();
     }
 
-    async function updateIp () {
-        ip = await getIp;
+    async function updateIp (){
+        ip = await getIp();
     }
 
     onMount(() => {

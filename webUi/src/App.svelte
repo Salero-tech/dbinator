@@ -46,7 +46,6 @@
   }
 
   function showSettings () {
-    console.log(settingsActive);
     settingsActive = true;
   }
 
@@ -86,9 +85,6 @@
 </script>
 
 <style lang="scss">
-.app{
-  height: 100%;
-}
 :global(body) {
   background-color: black;
   display: flex;
@@ -96,7 +92,15 @@
   margin: 0;
   color: whitesmoke;
   flex-direction: column;
+}
 
+:global(html) {
+    height: 100%;
+    display: contents;
+}
+
+#app{
+    height: 100%;
 }
 
 .mainContent {
@@ -147,7 +151,8 @@
 
 .end {
     display: flex;
-    flex-direction: row;
+    align-items: end;
+    height: expan;
   }
 
 
@@ -158,9 +163,7 @@
     width: 150px;
     height: 150px;
     left: 0;
-
 }
-
 </style>
 
 
