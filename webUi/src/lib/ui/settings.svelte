@@ -1,5 +1,6 @@
 <script lang="ts">
     export let isActive:boolean = false;
+    export let deactivate:Function;
 
     import {getIp, setIp} from "../logic/settings"
     import { onMount } from "svelte";
@@ -9,11 +10,11 @@
 
     function onSubmit (e:Event) {
         setIp(ip)
-        isActive = false;
+        deactivate();
     }
     function clickOut (e:Event) {
         if(e.target.id != "SettingsPopUp") return;
-        isActive = false;
+        deactivate();
     }
 
     async function updateIp () {

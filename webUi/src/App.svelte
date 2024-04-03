@@ -199,6 +199,6 @@
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div class="hiddenButton" on:dblclick={showSettings}></div>
-<Settings isActive={settingsActive} />
+<Settings isActive={settingsActive} deactivate={() => settingsActive = false}/>
 
 
