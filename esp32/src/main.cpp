@@ -352,7 +352,7 @@ void setup()
 
   // Static IP, leave without this line to get IP via DHCP
   //bool config(IPAddress local_ip, IPAddress gateway, IPAddress subnet, IPAddress dns1 = 0, IPAddress dns2 = 0);
-  ETH.config(myIP, myGW, mySN, myDNS);
+  //ETH.config(myIP, myGW, mySN, myDNS);
 
   WT32_ETH01_waitForConnect();
 
