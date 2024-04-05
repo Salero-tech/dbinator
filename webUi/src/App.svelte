@@ -30,8 +30,8 @@
 
   async function getFromBackend () {
       try {
-          const res = await getData();
-          const newData = await res.json();
+          const newData = await getData();
+          console.log(newData);
       if (!(JSON.stringify(newData) === JSON.stringify({}))) {
           console.log("update");  
           data = newData;

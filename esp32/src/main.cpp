@@ -171,7 +171,6 @@ String getContentType(String filename)
 
 bool handleFileRead(String path)
 {
-  Serial.println("handleFileRead: " + path);
 
   if (path.endsWith("/"))
   {
@@ -203,7 +202,6 @@ void initFS()
   // Format SPIFFS if not yet
   if (!FileFS.begin(true))
   {
-    Serial.println(F("SPIFFS/LittleFS failed! Formatting."));
 
     if (!FileFS.begin())
     {
@@ -223,6 +221,7 @@ void initFS()
 
 void handleApiData ()
 {
+  server.enableCrossOrigin();
   if (!WT32_ETH01_isConnected())
   {
     server.send(500, "text/plain", "no Network");
@@ -238,7 +237,6 @@ void handleApiData ()
     if (httpCode == HTTP_CODE_OK)
     {
       String payload = http.getString();
-      Serial.println(payload);
       server.send(200, "text/xml", payload);
       return;
     }
@@ -260,7 +258,6 @@ void handleApiTargetIp ()
     DeserializationError error = deserializeJson(doc, server.arg(0));
     Serial.println(error.f_str());
     dbMeterIp = doc["ip"].as<String>();
-    Serial.println(server.arg(1));
     server.send(200);
   }
 
