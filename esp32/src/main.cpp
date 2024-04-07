@@ -90,6 +90,8 @@ IPAddress mySN(255, 255, 255, 0);
 // Google DNS Server IP
 IPAddress myDNS(8, 8, 8, 8);
 
+void storeIp (String ip);
+
 //format bytes
 String formatBytes(size_t bytes)
 {
@@ -219,6 +221,8 @@ void initFS()
   }
 }
 
+HTTPClient http;
+
 void handleApiData ()
 {
   server.enableCrossOrigin();
@@ -227,7 +231,8 @@ void handleApiData ()
     server.send(500, "text/plain", "no Network");
     return;
   }
-  HTTPClient http;
+  
+
   http.begin("http://"+dbMeterIp+"/xml/Global.xml");
   http.setConnectTimeout(200);
   int httpCode = http.GET();
@@ -238,6 +243,7 @@ void handleApiData ()
     {
       String payload = http.getString();
       server.send(200, "text/xml", payload);
+      http.end();
       return;
     }
   }
@@ -256,8 +262,8 @@ void handleApiTargetIp ()
   {
     JsonDocument doc;
     DeserializationError error = deserializeJson(doc, server.arg(0));
-    Serial.println(error.f_str());
     dbMeterIp = doc["ip"].as<String>();
+    storeIp(dbMeterIp);
     server.send(200);
   }
 
@@ -278,7 +284,6 @@ void handleApiNetConf ()
     DeserializationError error = deserializeJson(doc, server.arg(0));
     Serial.println(error.f_str());
     dbMeterIp = doc["ip"].as<String>();
-    Serial.println(server.arg(1));
     server.send(200);
   }
 
@@ -353,7 +358,7 @@ void setup()
 
   WT32_ETH01_waitForConnect();
 
-  MDNS.begin("dbmeter");
+  MDNS.begin("dbinator");
   initFS();
   ipFromStore();
   initWebserver();
